@@ -124,7 +124,7 @@ strong { font-weight: 700; }
 }
 
 /* ── METRIC STRIP ── */
-.metric-strip { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 12px; }
+.metric-strip { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; margin-bottom: 12px; }
 .metric-box {
   background: var(--card);
   border-radius: var(--radius-sm);
@@ -132,8 +132,28 @@ strong { font-weight: 700; }
   text-align: center;
   border: 1.5px solid var(--border);
 }
-.metric-box .m-val { font-size: 20px; font-weight: 800; color: var(--orange); }
+.metric-box .m-val { font-size: 18px; font-weight: 800; color: var(--orange); }
 .metric-box .m-label { font-size: 10px; color: var(--muted); margin-top: 3px; font-weight: 600; }
+
+/* ── MEAL LOG ── */
+.meal-log-item { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.meal-log-item:last-child { border-bottom: none; }
+.meal-log-info { flex: 1; }
+.meal-log-name { font-size: 14px; font-weight: 700; }
+.meal-log-macros { font-size: 11px; color: var(--muted); margin-top: 2px; font-weight: 600; }
+.meal-log-del { font-size: 17px; cursor: pointer; color: var(--muted); line-height: 1; padding: 4px; }
+.add-meal-btn {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  width: 100%; margin-top: 10px;
+  background: var(--orange-light); color: var(--orange);
+  border: 1.5px dashed var(--orange); border-radius: var(--radius-sm);
+  padding: 11px; font-size: 13px; font-weight: 800;
+  cursor: pointer; font-family: inherit;
+}
+.nutrition-totals { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+.nutrition-total-box { background: var(--orange-light); border-radius: var(--radius-sm); padding: 10px; text-align: center; border: 1px solid var(--orange); }
+.nutrition-total-box .nt-val { font-size: 18px; font-weight: 800; color: var(--orange); }
+.nutrition-total-box .nt-label { font-size: 10px; color: var(--brown-mid); font-weight: 700; margin-top: 2px; }
 
 /* ── CHECKLIST ── */
 .check-item { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--border); cursor: pointer; }
@@ -449,8 +469,12 @@ input:focus { outline: 2px solid var(--orange); outline-offset: 1px; }
 
         <div class="metric-strip">
           <div class="metric-box">
-            <div class="m-val">1,900</div>
-            <div class="m-label">kcal target</div>
+            <div class="m-val" id="today-kcal">0</div>
+            <div class="m-label">kcal logged / 1900</div>
+          </div>
+          <div class="metric-box">
+            <div class="m-val" id="today-protein">0g</div>
+            <div class="m-label">protein / 120g target</div>
           </div>
           <div class="metric-box">
             <div class="m-val" id="today-steps">0</div>
@@ -460,6 +484,16 @@ input:focus { outline: 2px solid var(--orange); outline-offset: 1px; }
             <div class="m-val" id="today-water">0/7</div>
             <div class="m-label">water cups</div>
           </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Meals today</div>
+          <div class="nutrition-totals">
+            <div class="nutrition-total-box"><div class="nt-val" id="meal-kcal-total">0</div><div class="nt-label">kcal logged</div></div>
+            <div class="nutrition-total-box"><div class="nt-val" id="meal-protein-total">0g</div><div class="nt-label">protein logged</div></div>
+          </div>
+          <div id="meal-log-list"></div>
+          <button class="add-meal-btn" onclick="openMealModal()">+ Log a meal</button>
         </div>
 
         <div class="card">
@@ -662,6 +696,29 @@ input:focus { outline: 2px solid var(--orange); outline-offset: 1px; }
   </div>
 </div>
 
+<!-- MEAL MODAL -->
+<div class="modal-overlay" id="meal-modal" onclick="closeMealModal(event)">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Log a meal</div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px;">
+      <input type="text" id="meal-name-input" placeholder="Meal name (e.g. Breakfast — oats)" style="border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:12px;font-size:15px;font-family:inherit;font-weight:600;background:var(--cream);color:var(--text);">
+      <div style="display:flex;gap:10px;">
+        <div style="flex:1;">
+          <div style="font-size:11px;font-weight:800;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.5px;">Calories (kcal)</div>
+          <input type="number" id="meal-kcal-input" placeholder="e.g. 440" inputmode="numeric" style="width:100%;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:12px;font-size:16px;font-family:inherit;font-weight:700;background:var(--cream);color:var(--text);">
+        </div>
+        <div style="flex:1;">
+          <div style="font-size:11px;font-weight:800;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.5px;">Protein (g)</div>
+          <input type="number" id="meal-protein-input" placeholder="e.g. 35" inputmode="decimal" style="width:100%;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:12px;font-size:16px;font-family:inherit;font-weight:700;background:var(--cream);color:var(--text);">
+        </div>
+      </div>
+    </div>
+    <button class="modal-btn" onclick="saveMealLog()">Save meal ✓</button>
+    <button class="modal-btn-cancel" onclick="closeMealModalDirect()">Cancel</button>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -768,7 +825,55 @@ const CHECKS = [
 function getState() { try { return JSON.parse(localStorage.getItem('swasti_v2') || '{}'); } catch(e) { return {}; } }
 function saveState(s) { try { localStorage.setItem('swasti_v2', JSON.stringify(s)); } catch(e) {} }
 function todayKey() { return new Date().toISOString().slice(0,10); }
-function getToday(s) { const k = todayKey(); if (!s[k]) s[k] = {checks:{}, water:0, steps:0}; return s[k]; }
+function getToday(s) { const k = todayKey(); if (!s[k]) s[k] = {checks:{}, water:0, steps:0, meals:[]}; if (!s[k].meals) s[k].meals = []; return s[k]; }
+
+// ── MEAL LOGGING ──
+function openMealModal() {
+  document.getElementById('meal-name-input').value = '';
+  document.getElementById('meal-kcal-input').value = '';
+  document.getElementById('meal-protein-input').value = '';
+  document.getElementById('meal-modal').classList.add('open');
+  setTimeout(() => document.getElementById('meal-name-input').focus(), 300);
+}
+function closeMealModal(e) { if (e.target === document.getElementById('meal-modal')) closeMealModalDirect(); }
+function closeMealModalDirect() { document.getElementById('meal-modal').classList.remove('open'); }
+
+function saveMealLog() {
+  const name = document.getElementById('meal-name-input').value.trim();
+  const kcal = parseInt(document.getElementById('meal-kcal-input').value) || 0;
+  const protein = parseFloat(document.getElementById('meal-protein-input').value) || 0;
+  if (!name) { showToast('Enter a meal name'); return; }
+  if (!kcal && !protein) { showToast('Enter calories or protein'); return; }
+  const s = getState(); const t = getToday(s);
+  t.meals.push({ name, kcal, protein, time: Date.now() });
+  saveState(s); closeMealModalDirect();
+  showToast('✓ Meal logged!');
+  renderToday();
+}
+
+function deleteMeal(idx) {
+  const s = getState(); const t = getToday(s);
+  t.meals.splice(idx, 1); saveState(s); renderToday(); showToast('Meal removed');
+}
+
+function renderMeals(meals) {
+  const totalKcal = meals.reduce((a, m) => a + (m.kcal || 0), 0);
+  const totalProtein = meals.reduce((a, m) => a + (m.protein || 0), 0);
+  document.getElementById('meal-kcal-total').textContent = totalKcal.toLocaleString();
+  document.getElementById('meal-protein-total').textContent = totalProtein.toFixed(1) + 'g';
+  document.getElementById('today-kcal').textContent = totalKcal.toLocaleString();
+  document.getElementById('today-protein').textContent = totalProtein.toFixed(1) + 'g';
+  const list = document.getElementById('meal-log-list');
+  if (meals.length === 0) { list.innerHTML = '<div style="font-size:13px;color:var(--muted);font-weight:600;padding:6px 0 2px;">No meals logged yet.</div>'; return; }
+  list.innerHTML = meals.map((m, i) => `
+    <div class="meal-log-item">
+      <div class="meal-log-info">
+        <div class="meal-log-name">${m.name}</div>
+        <div class="meal-log-macros">${m.kcal ? m.kcal + ' kcal' : ''}${m.kcal && m.protein ? ' · ' : ''}${m.protein ? m.protein + 'g protein' : ''}</div>
+      </div>
+      <div class="meal-log-del" onclick="deleteMeal(${i})">🗑️</div>
+    </div>`).join('');
+}
 
 function switchPage(p) {
   document.querySelectorAll('.page').forEach(x => x.classList.remove('active'));
@@ -806,6 +911,7 @@ function renderToday() {
   document.getElementById('water-pct').textContent = wp + '%';
   document.getElementById('water-bar').style.width = wp + '%';
   renderWaterCups(t.water||0);
+  renderMeals(t.meals || []);
 
   const checksEl = document.getElementById('daily-checks');
   checksEl.innerHTML = '';
@@ -954,14 +1060,23 @@ function closeModalDirect() { document.getElementById('log-modal').classList.rem
 
 function renderLog() {
   const s = getState(); const el = document.getElementById('log-content');
-  const histKeys = Object.keys(s).filter(k => k.startsWith('hist_')).sort().reverse();
-  if (histKeys.length === 0) { el.innerHTML = `<div class="empty-state"><div class="es-icon">📊</div><p>No workouts logged yet.<br>Head to the Workout tab and log your first session!</p></div>`; return; }
-  el.innerHTML = histKeys.slice(0,30).map(k => {
-    const date = k.replace('hist_',''); const entries = s[k];
-    const d = new Date(date+'T00:00:00');
+  // collect all dates that have workout or meal data
+  const workoutDates = Object.keys(s).filter(k => k.startsWith('hist_')).map(k => k.replace('hist_',''));
+  const mealDates = Object.keys(s).filter(k => /^\d{4}-\d{2}-\d{2}$/.test(k) && s[k].meals && s[k].meals.length > 0);
+  const allDates = [...new Set([...workoutDates, ...mealDates])].sort().reverse();
+  if (allDates.length === 0) { el.innerHTML = `<div class="empty-state"><div class="es-icon">📊</div><p>Nothing logged yet.<br>Head to Today or Workout to log your first entry!</p></div>`; return; }
+  el.innerHTML = allDates.slice(0, 30).map(date => {
+    const d = new Date(date + 'T00:00:00');
     const label = d.toLocaleDateString('en-IN', {weekday:'long', day:'numeric', month:'long'});
-    const rows = entries.map((e,ei) => `<div class="log-entry"><div class="le-header"><div class="le-name">${e.name}</div><div class="le-del" onclick="deleteLogEntry('${k}',${ei})">🗑️</div></div><div>${e.sets.map(st => `<span class="le-set-chip">${st}</span>`).join('')}</div></div>`).join('');
-    return `<div class="log-date-group"><div class="log-date-label">${label}</div>${rows}</div>`;
+    const workouts = (s['hist_' + date] || []).map((e, ei) =>
+      `<div class="log-entry"><div class="le-header"><div class="le-name">${e.name}</div><div class="le-del" onclick="deleteLogEntry('hist_${date}',${ei})">🗑️</div></div><div>${e.sets.map(st => `<span class="le-set-chip">${st}</span>`).join('')}</div></div>`
+    ).join('');
+    const dayMeals = s[date] && s[date].meals ? s[date].meals : [];
+    const mealRows = dayMeals.length > 0 ? `<div class="log-entry" style="background:var(--orange-light);border-color:var(--orange);">
+      <div style="font-size:11px;font-weight:800;color:var(--orange);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Meals — ${dayMeals.reduce((a,m)=>a+(m.kcal||0),0)} kcal · ${dayMeals.reduce((a,m)=>a+(m.protein||0),0).toFixed(1)}g protein</div>
+      ${dayMeals.map(m => `<div style="font-size:13px;font-weight:600;padding:4px 0;color:var(--brown);">${m.name}${m.kcal||m.protein ? ' — ' : ''}${m.kcal ? m.kcal+' kcal' : ''}${m.kcal&&m.protein?' · ':''}${m.protein ? m.protein+'g P' : ''}</div>`).join('')}
+    </div>` : '';
+    return `<div class="log-date-group"><div class="log-date-label">${label}</div>${mealRows}${workouts}</div>`;
   }).join('');
 }
 
