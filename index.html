@@ -452,6 +452,33 @@ strong { font-weight: 700; }
 
 button:active { opacity: 0.78; transform: scale(0.98); }
 input:focus { outline: 2px solid var(--orange); outline-offset: 1px; }
+
+/* ── TRACKER ── */
+.week-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.week-nav-btn { background: var(--card); border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 8px 14px; font-size: 18px; cursor: pointer; font-family: inherit; color: var(--text); }
+.week-nav-label { font-size: 13px; font-weight: 800; color: var(--text); text-align: center; }
+.week-summary-strip { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-bottom: 14px; }
+.week-summary-box { background: var(--card); border-radius: var(--radius-sm); padding: 10px 6px; text-align: center; border: 1.5px solid var(--border); }
+.week-summary-box .ws-val { font-size: 15px; font-weight: 800; color: var(--orange); }
+.week-summary-box .ws-label { font-size: 9px; color: var(--muted); margin-top: 2px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; }
+.tracker-day-card { background: var(--card); border-radius: var(--radius); border: 1.5px solid var(--border); padding: 14px; margin-bottom: 10px; }
+.tracker-day-card.today-card { border-color: var(--orange); background: var(--orange-light); }
+.tracker-day-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.tracker-day-name { font-size: 14px; font-weight: 800; }
+.tracker-day-badge { font-size: 10px; font-weight: 700; color: var(--muted); background: var(--border); padding: 3px 9px; border-radius: 20px; }
+.tracker-day-badge.hit { background: #d4f5d4; color: #2a7a2a; }
+.tracker-metrics { display: grid; grid-template-columns: repeat(2,1fr); gap: 8px; }
+.tm-box { background: var(--cream); border-radius: var(--radius-sm); padding: 9px 10px; border: 1px solid var(--border); }
+.tm-box.hit { background: #eefaee; border-color: #8fcf8f; }
+.tm-label { font-size: 9px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; }
+.tm-val { font-size: 15px; font-weight: 800; color: var(--text); }
+.tm-val.empty { color: var(--border); font-size: 13px; font-weight: 600; }
+.tracker-empty { text-align:center; padding: 30px 0; color: var(--muted); font-size: 13px; font-weight: 600; }
+
+/* ── WEIGHT & CALORIES BURNT ── */
+.dual-input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.dual-input-group label { display: block; font-size: 10px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
+.dual-input-group input { width: 100%; border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 10px 12px; font-size: 16px; background: var(--cream); font-family: inherit; font-weight: 600; color: var(--text); }
 </style>
 </head>
 <body>
@@ -520,6 +547,24 @@ input:focus { outline: 2px solid var(--orange); outline-offset: 1px; }
             <input type="number" id="steps-input" placeholder="Enter steps" inputmode="numeric">
             <button onclick="saveSteps()">Save</button>
           </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Body weight & calories burnt</div>
+          <div class="dual-input-row" style="margin-bottom:10px;">
+            <div class="dual-input-group">
+              <label>Weight (kg)</label>
+              <input type="number" id="weight-input" placeholder="e.g. 68.5" inputmode="decimal" step="0.1">
+            </div>
+            <div class="dual-input-group">
+              <label>Calories burnt</label>
+              <input type="number" id="burnt-input" placeholder="e.g. 320" inputmode="numeric">
+            </div>
+          </div>
+          <div class="steps-input-row">
+            <button onclick="saveBodyMetrics()" style="flex:1;">Save</button>
+          </div>
+          <div id="body-metrics-display" style="margin-top:10px;font-size:13px;color:var(--muted);font-weight:600;"></div>
         </div>
 
         <div class="card">
@@ -661,6 +706,23 @@ input:focus { outline: 2px solid var(--orange); outline-offset: 1px; }
 
       </div>
     </div>
+    <!-- TRACKER PAGE -->
+    <div class="page" id="page-tracker">
+      <div class="page-header">
+        <h1>Weekly Tracker</h1>
+        <p>Steps · calories · weight · burn</p>
+      </div>
+      <div class="page-content">
+        <div class="week-nav">
+          <button class="week-nav-btn" onclick="shiftWeek(-1)">&#8592;</button>
+          <div class="week-nav-label" id="week-nav-label">This week</div>
+          <button class="week-nav-btn" onclick="shiftWeek(1)">&#8594;</button>
+        </div>
+        <div class="week-summary-strip" id="week-summary"></div>
+        <div id="tracker-days"></div>
+      </div>
+    </div>
+
   </div>
 
   <!-- BOTTOM NAV -->
@@ -677,9 +739,13 @@ input:focus { outline: 2px solid var(--orange); outline-offset: 1px; }
       <div class="nav-icon">📊</div>
       <div class="nav-label">Log</div>
     </div>
+    <div class="nav-item" onclick="switchPage('tracker')" id="nav-tracker">
+      <div class="nav-icon">📈</div>
+      <div class="nav-label">Tracker</div>
+    </div>
     <div class="nav-item" onclick="switchPage('plan')" id="nav-plan">
       <div class="nav-icon">📋</div>
-      <div class="nav-label">My Plan</div>
+      <div class="nav-label">Plan</div>
     </div>
   </nav>
 </div>
@@ -827,6 +893,139 @@ function saveState(s) { try { localStorage.setItem('swasti_v2', JSON.stringify(s
 function todayKey() { return new Date().toISOString().slice(0,10); }
 function getToday(s) { const k = todayKey(); if (!s[k]) s[k] = {checks:{}, water:0, steps:0, meals:[]}; if (!s[k].meals) s[k].meals = []; return s[k]; }
 
+// ── BODY METRICS ──
+function saveBodyMetrics() {
+  const weight = parseFloat(document.getElementById('weight-input').value) || null;
+  const burnt  = parseInt(document.getElementById('burnt-input').value)   || null;
+  if (!weight && !burnt) { showToast('Enter weight or calories burnt'); return; }
+  const s = getState(); const t = getToday(s);
+  if (weight) t.weight = weight;
+  if (burnt)  t.caloriesBurnt = burnt;
+  saveState(s);
+  showToast('Saved ✓');
+  renderBodyMetrics(t);
+}
+
+function renderBodyMetrics(t) {
+  document.getElementById('weight-input').value = t.weight || '';
+  document.getElementById('burnt-input').value  = t.caloriesBurnt || '';
+  const parts = [];
+  if (t.weight)        parts.push('⚖️ ' + t.weight + ' kg');
+  if (t.caloriesBurnt) parts.push('🔥 ' + t.caloriesBurnt + ' kcal burnt');
+  document.getElementById('body-metrics-display').textContent = parts.join('  ·  ');
+}
+
+// ── TRACKER ──
+let trackerWeekOffset = 0;
+
+function getWeekDates(offset) {
+  const today = new Date();
+  const dow = (today.getDay() + 6) % 7; // 0=Mon
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - dow + offset * 7);
+  return Array.from({length: 7}, (_, i) => {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    return d.toISOString().slice(0, 10);
+  });
+}
+
+function shiftWeek(dir) {
+  trackerWeekOffset += dir;
+  if (trackerWeekOffset > 0) trackerWeekOffset = 0;
+  renderTracker();
+}
+
+function renderTracker() {
+  const s = getState();
+  const todayStr = todayKey();
+  const dates = getWeekDates(trackerWeekOffset);
+  const dayNames = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+
+  // Week label
+  const fmt = d => new Date(d+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short'});
+  document.getElementById('week-nav-label').textContent =
+    trackerWeekOffset === 0 ? 'This week' :
+    trackerWeekOffset === -1 ? 'Last week' :
+    fmt(dates[0]) + ' – ' + fmt(dates[6]);
+  document.getElementById('week-nav-btn-next') && (document.querySelector('.week-nav-btn:last-child').disabled = trackerWeekOffset >= 0);
+
+  // Weekly summary totals
+  let wSteps=0, wKcal=0, wProtein=0, wBurnt=0, daysWithData=0;
+  dates.forEach(date => {
+    const d = s[date];
+    if (!d) return;
+    if (d.steps || d.meals?.length || d.weight || d.caloriesBurnt) daysWithData++;
+    wSteps   += d.steps || 0;
+    wKcal    += (d.meals||[]).reduce((a,m)=>a+(m.kcal||0),0);
+    wProtein += (d.meals||[]).reduce((a,m)=>a+(m.protein||0),0);
+    wBurnt   += d.caloriesBurnt || 0;
+  });
+  document.getElementById('week-summary').innerHTML = `
+    <div class="week-summary-box"><div class="ws-val">${(wSteps/1000).toFixed(1)}k</div><div class="ws-label">Steps</div></div>
+    <div class="week-summary-box"><div class="ws-val">${Math.round(wKcal/7)||'—'}</div><div class="ws-label">Avg kcal</div></div>
+    <div class="week-summary-box"><div class="ws-val">${Math.round(wProtein/7)||'—'}g</div><div class="ws-label">Avg prot</div></div>
+    <div class="week-summary-box"><div class="ws-val">${wBurnt||'—'}</div><div class="ws-label">Burnt</div></div>`;
+
+  // Day cards
+  document.getElementById('tracker-days').innerHTML = dates.map((date, i) => {
+    const d = s[date] || {};
+    const isToday = date === todayStr;
+    const isFuture = date > todayStr;
+    const dayOfWeek = (new Date(date+'T00:00:00').getDay()+6)%7;
+    const plan = DAYS[dayOfWeek];
+    const stepsTarget = plan.type === 'strength' ? 8000 : 10000;
+    const steps = d.steps || 0;
+    const kcal  = (d.meals||[]).reduce((a,m)=>a+(m.kcal||0),0);
+    const prot  = (d.meals||[]).reduce((a,m)=>a+(m.protein||0),0);
+    const weight = d.weight || null;
+    const burnt  = d.caloriesBurnt || null;
+    const stepsHit = steps >= stepsTarget;
+    const kcalHit  = kcal >= 1600 && kcal <= 2100;
+    const protHit  = prot >= 100;
+    const hasAny   = steps || kcal || weight || burnt;
+
+    if (isFuture) return `
+      <div class="tracker-day-card" style="opacity:0.45;">
+        <div class="tracker-day-header">
+          <div class="tracker-day-name">${dayNames[i]} · ${fmt(date)}</div>
+          <div class="tracker-day-badge">${plan.badge}</div>
+        </div>
+        <div class="tracker-empty">No data yet</div>
+      </div>`;
+
+    return `
+      <div class="tracker-day-card${isToday?' today-card':''}">
+        <div class="tracker-day-header">
+          <div class="tracker-day-name">${dayNames[i]} · ${fmt(date)}${isToday?' 👈':''}</div>
+          <div class="tracker-day-badge${hasAny?' hit':''}">${hasAny ? plan.badge : 'No data'}</div>
+        </div>
+        <div class="tracker-metrics">
+          <div class="tm-box${stepsHit?' hit':''}">
+            <div class="tm-label">Steps</div>
+            ${steps ? `<div class="tm-val">${steps.toLocaleString()}<span style="font-size:10px;font-weight:600;color:var(--muted);"> / ${stepsTarget.toLocaleString()}</span></div>` : '<div class="tm-val empty">—</div>'}
+          </div>
+          <div class="tm-box${kcalHit?' hit':''}">
+            <div class="tm-label">Calories eaten</div>
+            ${kcal ? `<div class="tm-val">${kcal.toLocaleString()}<span style="font-size:10px;font-weight:600;color:var(--muted);"> kcal</span></div>` : '<div class="tm-val empty">—</div>'}
+          </div>
+          <div class="tm-box${protHit?' hit':''}">
+            <div class="tm-label">Protein</div>
+            ${prot ? `<div class="tm-val">${prot.toFixed(1)}<span style="font-size:10px;font-weight:600;color:var(--muted);">g</span></div>` : '<div class="tm-val empty">—</div>'}
+          </div>
+          <div class="tm-box${weight?'':''}">
+            <div class="tm-label">Weight</div>
+            ${weight ? `<div class="tm-val">${weight}<span style="font-size:10px;font-weight:600;color:var(--muted);"> kg</span></div>` : '<div class="tm-val empty">—</div>'}
+          </div>
+          <div class="tm-box" style="grid-column:span 2;">
+            <div class="tm-label">Calories burnt (workout)</div>
+            ${burnt ? `<div class="tm-val">${burnt.toLocaleString()}<span style="font-size:10px;font-weight:600;color:var(--muted);"> kcal</span></div>` : '<div class="tm-val empty">—</div>'}
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
 // ── MEAL LOGGING ──
 function openMealModal() {
   document.getElementById('meal-name-input').value = '';
@@ -882,6 +1081,7 @@ function switchPage(p) {
   document.getElementById('nav-' + p).classList.add('active');
   document.getElementById('main-screen').scrollTop = 0;
   if (p === 'log') renderLog();
+  if (p === 'tracker') renderTracker();
 }
 
 function renderToday() {
@@ -912,6 +1112,7 @@ function renderToday() {
   document.getElementById('water-bar').style.width = wp + '%';
   renderWaterCups(t.water||0);
   renderMeals(t.meals || []);
+  renderBodyMetrics(t);
 
   const checksEl = document.getElementById('daily-checks');
   checksEl.innerHTML = '';
